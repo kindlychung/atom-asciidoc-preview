@@ -141,15 +141,35 @@ class AsciiDocPreviewView extends ScrollView
     else if @editor?
       @renderAsciiDocText(@editor.getText())
 
-  renderAsciiDocText: (text) ->
-    renderer.toHtml text, @getPath(), (html) =>
-      @loading = false
-      @html(html)
-      @enableAnchorScroll html, (top) =>
-        @scrollTop top
+    renderAsciiDocText: (text) ->
+      renderer.toHtml text, @getPath(), (html) =>
+        @loading = false
+        @html(html)
+        html = $(html)
+        for h in html.find("head")
+          s = document.createElement("script")
+          s.outerHTML = '''<script type="text/javascript" async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"> </script>'''
+          s1 = document.createElement("script")
+          s1.outerHTML = '''
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX", "output/HTML-CSS"],
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+      processEscapes: true
+    },
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+'''
+          h.appendChild s
+          h.appendChild s1
+        @enableAnchorScroll html, (top) =>
+          @scrollTop top
 
-      @emitter.emit 'did-change-asciidoc'
-      @originalTrigger('asciidoc-preview:asciidoc-changed')
+        @emitter.emit 'did-change-asciidoc'
+        @originalTrigger('asciidoc-preview:asciidoc-changed')
 
   enableAnchorScroll: (html, callback) ->
     document.querySelector('#asciidoc-linkUrl')?.remove()
